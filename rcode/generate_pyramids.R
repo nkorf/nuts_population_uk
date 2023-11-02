@@ -10,6 +10,12 @@ pyramid_data_all <- readxl::read_excel("../data/unidemopublishing.xlsx",sheet = 
 
 colnames(pyramid_data_all) <- c("age","total","male","female")
 
+number_formatter <- function() {
+  function(x) {
+    paste0(format(round(abs(x) / 1e6, 1), nsmall = 1), "M")
+  }
+}
+
 pyramid_data_all |> 
   select(age, male,female) |> 
   filter(age!="TOTAL") |> 
@@ -40,7 +46,7 @@ ggplot(plotdata,aes(x=age_band,y=total,fill=type))+
              aes(x=age_band,y=-total),stat="identity")+
       coord_flip()+
     scale_fill_manual(name="",values=c("darkred","steelblue"),labels = c("Female","Male"))+
-    scale_y_continuous(n.breaks = 8,labels = unit_format(unit = "M", scale = 1e-6))+
+    scale_y_continuous(n.breaks = 8,labels = number_formatter())+
     geom_vline(xintercept = 0,linetype="solid")+
     cowplot::theme_cowplot()+
     labs(x="Totals",y="Age Band",title = "UK Population Pyramid",
@@ -50,6 +56,8 @@ ggplot(plotdata,aes(x=age_band,y=total,fill=type))+
           axis.line.x = element_line(),
           axis.text.x = element_text(vjust = .5),
           panel.grid.major.y = element_line(color = "lightgrey",linetype = "dashed"),
+          panel.grid.major.x = element_line(color = "lightgrey",linetype = "dotted"),
+          plot.subtitle = element_text(size = rel(0.8)),
           legend.justification = "centre")->this_plot
 
 #ggsave(plot = this_plot,filename = file.path("plots","all_uk.jpeg"), width = 6,height = 5,units = "in")
@@ -107,7 +115,11 @@ norwich_pyramid <-  ggplot()+
            aes(x=age_band,y=population,fill=gender),stat="identity",position = "dodge")+
     coord_flip()+
     scale_fill_manual(name="",values=c("darkred","steelblue"),labels = c("Female","Male"))+
- cowplot::theme_cowplot()+
+ cowplot::theme_cowplot() +
+  theme(
+    panel.background = element_rect(fill = "white", colour = "white"),
+    plot.background = element_rect(fill = "white", colour = NA)
+  )+
     labs(x="Totals",y="Age Band",title = "Norwich Population Pyramid",
          subtitle = paste("Total Population: ",format(sum(norwich_data$population),big.mark = ",")),
          caption = "ONS Data - 2020\nhttp://github.com/nkorf")+
@@ -132,11 +144,15 @@ plot_pyramid_nuts <- function(pyramid_data,nuts_code_filter,nuts_region_label){
            aes(x=age_band,y=-population,fill=gender),stat="identity",position = "dodge")+
         geom_bar(data=subset(this_nuts_data,gender=="male"),
            aes(x=age_band,y=population,fill=gender),stat="identity",position = "dodge")+
+        scale_y_continuous(n.breaks = 8,labels = number_formatter())+
         coord_flip()+
         scale_fill_manual(name="",values=c("darkred","steelblue"),
                       labels = c("Female","Male"))+
-        cowplot::theme_cowplot()+
-        labs(y="Totals",x="Age Band",
+        cowplot::theme_cowplot() +
+  theme(
+    panel.background = element_rect(fill = "white", colour = "white"),
+    plot.background = element_rect(fill = "white", colour = NA)
+  )+labs(y="Totals",x="Age Band",
             title = nuts_region_label,
             subtitle = paste("Total Population: ",format(sum(this_nuts_data$population),
                                                       big.mark = ",")),
@@ -145,6 +161,8 @@ plot_pyramid_nuts <- function(pyramid_data,nuts_code_filter,nuts_region_label){
           axis.line.x = element_line(),
           axis.text.x = element_text(vjust = .5),
           panel.grid.major.y = element_line(color = "lightgrey",linetype = "dashed"),
+          panel.grid.major.x = element_line(color = "lightgrey",linetype = "dotted"),
+          plot.subtitle = element_text(size = rel(0.6)),
           legend.justification = "centre")
    
      return(pyramid_plot)
